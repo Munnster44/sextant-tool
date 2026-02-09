@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sextant + Intercept Calculator (v1.0-B)</title>
+  <meta name="theme-color" content="#0b3d91" />
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121c2f;
+      --muted:#94a3b8;
+      --text:#e5e7eb;
+      --accent:#38bdf8;
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --border:rgba(148,163,184,.22);
+      --shadow:0 10px 30px rgba(0,0,0,.25);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:linear-gradient(180deg,#050914 0%, #0b1220 40%, #070b15 100%);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background:rgba(5,9,20,.75);
+      border-bottom:1px solid var(--border);
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:14px 14px}
+    .topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .title{display:flex;gap:10px;align-items:center}
+    .logo{
+      width:42px;height:42px;border-radius:12px;
+      background:radial-gradient(circle at 30% 30%, #7dd3fc, #0ea5e9 55%, #0b3d91);
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .logo:after{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.22), transparent 40%),
+        radial-gradient(circle at 70% 80%, rgba(255,255,255,.18), transparent 60%);
+      mix-blend-mode:screen;
+    }
+    h1{font-size:18px;margin:0;line-height:1.15}
+    .subtitle{font-size:12px;color:var(--muted)}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    button, select, input{font:inherit}
+    .btn{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:9px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition:transform .05s ease, border-color .2s ease, background .2s ease;
+      user-select:none;
+      display:inline-flex; gap:8px; align-items:center;
+    }
+    .btn:hover{border-color:rgba(56,189,248,.5); background:rgba(56,189,248,.08)}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{border-color:rgba(56,189,248,.7); background:rgba(56,189,248,.14)}
+    .btn.good{border-color:rgba(34,197,94,.7); background:rgba(34,197,94,.12)}
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--border);
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.03);
+    }
+    main{padding:18px 0 30px}
+    .grid{
+      display:grid;
+      grid-template-columns:1.05fr .95fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      background:rgba(18,28,47,.88);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .head{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    }
+    .card .head h2{margin:0;font-size:14px}
+    .card .body{padding:14px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{padding:8px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.03);cursor:pointer;color:var(--muted)}
+    .tab.active{color:var(--text);border-color:rgba(56,189,248,.6);background:rgba(56,189,248,.10)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+    @media (max-width: 520px){.row{grid-template-columns:1fr}}
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    input, select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      outline:none;
+    }
+    input:focus, select:focus{border-color:rgba(56,189,248,.65)}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px}
+    .divider{height:1px;background:var(--border);margin:12px 0}
+    .results{display:grid; gap:10px;}
+    .kpi{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+    }
+    .kpi .name{font-size:12px;color:var(--muted)}
+    .kpi .val{font-size:16px;font-weight:700}
+    .small{font-size:12px;color:var(--muted)}
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:rgba(255,255,255,.02);
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--border);
+      font-size:13px;
+      text-align:left;
+      vertical-align:top;
+    }
+    th{color:var(--muted);font-weight:600;background:rgba(255,255,255,.03)}
+    tr:last-child td{border-bottom:none}
+    .status{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .dot{width:10px;height:10px;border-radius:999px;background:var(--warn)}
+    .dot.ok{background:var(--good)}
+    .dot.bad{background:var(--bad)}
+    footer{
+      padding:10px 0 30px;
+      color:var(--muted);
+      font-size:12px;
+      text-align:center;
+    }
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    .right{display:flex;gap:8px;align-items:center}
+    .printOnly{display:none}
+    @media print{
+      header, .noPrint{display:none !important;}
+      body{background:#fff;color:#000}
+      .card{box-shadow:none;border:1px solid #ddd;background:#fff}
+      .printOnly{display:block}
+      .kpi, table{border:1px solid #ddd}
+      th{background:#f4f4f4}
+      .wrap{max-width:100%;padding:0}
+      main{padding:0}
+    }
+
+    /* =========================================================
+       DROPDOWN READABILITY FIX (prevents white-on-white menus)
+       ========================================================= */
+    select, option, optgroup{
+      background-color:#121c2f !important;
+      color:#e5e7eb !important;
+    }
+    select{
+      appearance:none;
+      -webkit-appearance:none;
+      -moz-appearance:none;
+
+      background-image:
+        linear-gradient(45deg, transparent 50%, #e5e7eb 50%),
+        linear-gradient(135deg, #e5e7eb 50%, transparent 50%),
+        linear-gradient(to right, rgba(148,163,184,.22), rgba(148,163,184,.22));
+      background-position:
+        calc(100% - 18px) calc(50% - 3px),
+        calc(100% - 12px) calc(50% - 3px),
+        calc(100% - 38px) 50%;
+      background-size:
+        6px 6px,
+        6px 6px,
+        1px 60%;
+      background-repeat:no-repeat;
+      padding-right:44px;
+    }
+    select:disabled{
+      opacity:1;
+      color:#cbd5e1 !important;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap topbar">
+    <div class="title">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1 id="appTitle">Sextant + Intercept Calculator</h1>
+        <div class="subtitle" id="appSub">Ho corrections • LHA/Hc/Zn • Intercept method • Offline PWA</div>
+      </div>
+    </div>
+    <div class="controls noPrint">
+      <span class="pill" id="verPill">v1.0-B</span>
+      <button class="btn" id="btnInstall" style="display:none">Install</button>
+      <button class="btn" id="btnPrint">Print</button>
+      <button class="btn" id="btnReset">Reset</button>
+      <button class="btn primary" id="btnLang">EN / FR</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="grid">
+      <!-- INPUTS -->
+      <section class="card">
+        <div class="head">
+          <h2 id="hInputs">Inputs</h2>
+          <div class="tabs noPrint">
+            <div class="tab active" data-tab="sight" id="tabSight">Sight</div>
+            <div class="tab" data-tab="almanac" id="tabAlmanac">Almanac + DR</div>
+            <div class="tab" data-tab="reduce" id="tabReduce">Reduction</div>
+            <div class="tab" data-tab="settings" id="tabSettings">Settings</div>
+          </div>
+        </div>
+        <div class="body">
+          <!-- TAB: SIGHT -->
+          <div class="tabPanel" id="panelSight">
+            <div class="row">
+              <div>
+                <label id="lblBody">Celestial body</label>
+                <select id="bodySel">
+                  <option value="sun">☉ Sun</option>
+                  <option value="moon">🌙 Moon</option>
+                  <option value="star">⭐ Star / Planet</option>
+                </select>
+                <div class="hint" id="hintBody">Use Moon when you want parallax/HP correction.</div>
+              </div>
+              <div>
+                <label id="lblLimb">Limb (Sun/Moon)</label>
+                <select id="limbSel">
+                  <option value="lower">Lower limb</option>
+                  <option value="upper">Upper limb</option>
+                  <option value="center">Center (no SD)</option>
+                </select>
+                <div class="hint" id="hintLimb">Stars/planets normally use Center.</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label id="lblHs">Hs (sextant altitude)</label>
+                <input id="hsIn" placeholder="Example: 45 30.2  (deg min)" />
+                <div class="hint" id="hintHs">Enter as “deg min” (space-separated) or decimal degrees (e.g., 45.5033).</div>
+              </div>
+              <div>
+                <label id="lblIE">Index error (minutes)</label>
+                <input id="ieIn" placeholder="Example: +2.0 or -1.5" />
+                <div class="hint" id="hintIE">Positive means add to Hs (ON the arc). Negative means subtract (OFF the arc).</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label id="lblEye">Height of eye</label>
+                <input id="eyeIn" placeholder="Example: 2.0" />
+                <div class="hint" id="hintEye">Used for dip correction.</div>
+              </div>
+              <div>
+                <label id="lblEyeUnit">Units</label>
+                <select id="eyeUnitSel">
+                  <option value="m">meters</option>
+                  <option value="ft">feet</option>
+                </select>
+                <div class="hint" id="hintEyeUnit">Dip uses √height.</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label id="lblHP">Horizontal Parallax HP (minutes)</label>
+                <input id="hpIn" placeholder="Moon ~ 54–61, Sun ~ 0.15 (optional)" />
+                <div class="hint" id="hintHP">If blank: Moon defaults 57.0′, Sun defaults 0.15′, Stars default 0.</div>
+              </div>
+              <div>
+                <label id="lblSD">Semi-diameter SD (minutes)</label>
+                <input id="sdIn" placeholder="Sun ~ 16.0, Moon ~ 15–16 (optional)" />
+                <div class="hint" id="hintSD">If blank: Sun 16.0′, Moon 15.5′, Stars 0.</div>
+              </div>
+            </div>
+
+            <div class="right noPrint">
+              <button class="btn good" id="btnComputeHo">Compute Ho</button>
+              <span class="small" id="liveHoNote"></span>
+            </div>
+          </div>
+
+          <!-- TAB: ALMANAC + DR -->
+          <div class="tabPanel" id="panelAlmanac" style="display:none">
+            <div class="row">
+              <div>
+                <label id="lblLat">DR Latitude</label>
+                <input id="latIn" placeholder="Example: 43 15.0 N  (or -43.25)" />
+                <div class="hint" id="hintLat">Use N/S or +/- . Example: “43 15 N” or “-43.25”.</div>
+              </div>
+              <div>
+                <label id="lblLon">DR Longitude</label>
+                <input id="lonIn" placeholder="Example: 79 30.0 W  (or -79.5)" />
+                <div class="hint" id="hintLon">Use E/W or +/- . West is negative if using decimals.</div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <div>
+                <label id="lblGHA">GHA (° ′)</label>
+                <input id="ghaIn" placeholder="Example: 123 45.2" />
+                <div class="hint" id="hintGHA">Enter from Nautical Almanac for the body at the time of sight.</div>
+              </div>
+              <div>
+                <label id="lblDec">Declination (° ′ N/S)</label>
+                <input id="decIn" placeholder="Example: 18 22.4 N  (or -18.373)" />
+                <div class="hint" id="hintDec">Use N/S or +/-.</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label id="lblTime">Time (optional note)</label>
+                <input id="timeIn" placeholder="Example: 2026-02-08 14:33 UTC" />
+                <div class="hint" id="hintTime">Stored with the log entry / printout. (This app does not download almanac data.)</div>
+              </div>
+              <div>
+                <label id="lblAltMethod">Altitude method</label>
+                <select id="altMethodSel">
+                  <option value="ho">Use Ho from Sight tab (recommended)</option>
+                  <option value="manual">Manually enter Ho</option>
+                </select>
+                <div class="hint" id="hintAltMethod">If manual, enter Ho below.</div>
+              </div>
+            </div>
+
+            <div class="row" id="manualHoRow" style="display:none">
+              <div>
+                <label id="lblHoManual">Ho (manual)</label>
+                <input id="hoManualIn" placeholder="Example: 45 12.3" />
+                <div class="hint" id="hintHoManual">Only used if Altitude method = manual.</div>
+              </div>
+              <div>
+                <label>&nbsp;</label>
+                <div class="hint" id="hintManualSpacer"> </div>
+              </div>
+            </div>
+
+            <div class="right noPrint">
+              <button class="btn good" id="btnComputeReduction">Compute Reduction</button>
+            </div>
+          </div>
+
+          <!-- TAB: REDUCTION -->
+          <div class="tabPanel" id="panelReduce" style="display:none">
+            <div class="hint" id="reduceHint">
+              This tab shows computed LHA, Hc, Zn, and intercept (a). Use the Almanac + DR tab to enter DR, GHA, and Dec.
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <div>
+                <label id="lblAP">Assumed Position (optional)</label>
+                <select id="apModeSel">
+                  <option value="dr">Use DR as AP</option>
+                  <option value="round">Round DR to nearest whole degree (classic AP)</option>
+                </select>
+                <div class="hint" id="hintAP">Rounding can make manual plotting easier.</div>
+              </div>
+              <div>
+                <label id="lblNote">Sight note</label>
+                <input id="noteIn" placeholder="Example: Morning Sun LL, calm sea" />
+                <div class="hint" id="hintNote">Printed on the sheet.</div>
+              </div>
+            </div>
+
+            <div class="right noPrint">
+              <button class="btn good" id="btnRecompute">Recompute Now</button>
+            </div>
+          </div>
+
+          <!-- TAB: SETTINGS -->
+          <div class="tabPanel" id="panelSettings" style="display:none">
+            <div class="row">
+              <div>
+                <label id="lblMode">Display mode</label>
+                <select id="modeSel">
+                  <option value="teach">Teaching mode (show steps)</option>
+                  <option value="simple">Simple mode (key outputs)</option>
+                </select>
+                <div class="hint" id="hintMode">Teaching mode shows each correction and trig results.</div>
+              </div>
+              <div>
+                <label id="lblUnits">Angle input preference</label>
+                <select id="anglePrefSel">
+                  <option value="auto">Auto-detect (deg min or decimal)</option>
+                  <option value="dm">Prefer deg min</option>
+                  <option value="dec">Prefer decimal degrees</option>
+                </select>
+                <div class="hint" id="hintUnits">Auto-detect is safest.</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label id="lblSave">Storage</label>
+                <select id="saveSel">
+                  <option value="on">Save inputs locally (recommended)</option>
+                  <option value="off">Do not save</option>
+                </select>
+                <div class="hint" id="hintSave">Uses your browser’s localStorage. No data leaves your device.</div>
+              </div>
+              <div>
+                <label id="lblLog">Sight log</label>
+                <select id="logSel">
+                  <option value="on">Keep a local log</option>
+                  <option value="off">No log</option>
+                </select>
+                <div class="hint" id="hintLog">Log stores time/inputs/outputs for review and printing.</div>
+              </div>
+            </div>
+
+            <div class="right noPrint">
+              <button class="btn" id="btnClearLog">Clear Log</button>
+            </div>
+
+            <div class="divider"></div>
+            <div class="small" id="settingsFoot">
+              Notes: This app uses standard approximations (dip, Bennett refraction, simple parallax/SD handling). Always verify with official tables for exams or critical navigation.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- OUTPUTS -->
+      <section class="card">
+        <div class="head">
+          <h2 id="hOutputs">Outputs</h2>
+          <div class="status">
+            <span class="dot" id="statusDot"></span>
+            <span class="small" id="statusText">Enter a sight and compute Ho.</span>
+          </div>
+        </div>
+        <div class="body">
+          <div class="printOnly">
+            <h2 style="margin:0 0 6px">Sextant Sight Reduction</h2>
+            <div class="small mono" id="printStamp"></div>
+            <div class="divider"></div>
+          </div>
+
+          <div class="results" id="kpis">
+            <div class="kpi">
+              <div>
+                <div class="name" id="kHoName">Ho (observed altitude)</div>
+                <div class="small" id="kHoSub">Corrected from Hs</div>
+              </div>
+              <div class="val mono" id="kHoVal">—</div>
+            </div>
+            <div class="kpi">
+              <div>
+                <div class="name" id="kLhaName">LHA</div>
+                <div class="small" id="kLhaSub">GHA ± longitude</div>
+              </div>
+              <div class="val mono" id="kLhaVal">—</div>
+            </div>
+            <div class="kpi">
+              <div>
+                <div class="name" id="kHcName">Hc (computed altitude)</div>
+                <div class="small" id="kHcSub">From AP, Dec, LHA</div>
+              </div>
+              <div class="val mono" id="kHcVal">—</div>
+            </div>
+            <div class="kpi">
+              <div>
+                <div class="name" id="kZnName">Zn (true bearing)</div>
+                <div class="small" id="kZnSub">Azimuth to GP</div>
+              </div>
+              <div class="val mono" id="kZnVal">—</div>
+            </div>
+            <div class="kpi">
+              <div>
+                <div class="name" id="kIntName">Intercept (a)</div>
+                <div class="small" id="kIntSub">Toward/Away</div>
+              </div>
+              <div class="val mono" id="kIntVal">—</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div id="stepsArea">
+            <table id="stepsTable">
+              <thead>
+                <tr>
+                  <th id="thStep">Step</th>
+                  <th id="thValue">Value</th>
+                  <th id="thNotes">Notes</th>
+                </tr>
+              </thead>
+              <tbody id="stepsBody">
+                <tr><td colspan="3" class="small" id="stepsEmpty">No calculations yet.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="divider"></div>
+
+            <table id="logTable" style="display:none">
+              <thead>
+                <tr>
+                  <th id="thLog">Sight log (most recent first)</th>
+                  <th id="thLogKey">Key result</th>
+                </tr>
+              </thead>
+              <tbody id="logBody"></tbody>
+            </table>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="small" id="copyright">
+            © <span id="yearNow"></span> Sextant Calculator (v1.0-B). For training/education; verify with official tables.
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="wrap">
+  <span class="mono">Sextant + Intercept Calculator • v1.0-B • Offline-ready PWA</span>
+</footer>
+
+<script>
+(() => {
+  // =========================
+  // Helpers (angles, parsing)
+  // =========================
+  const $ = (id) => document.getElementById(id);
+
+  const clamp360 = (deg) => {
+    let x = deg % 360;
+    if (x < 0) x += 360;
+    return x;
+  };
+
+  const toRad = (d) => d * Math.PI / 180;
+  const toDeg = (r) => r * 180 / Math.PI;
+
+  function fmtDM(deg){
+    if (!isFinite(deg)) return "—";
+    const sign = deg < 0 ? "-" : "";
+    const a = Math.abs(deg);
+    const d = Math.floor(a + 1e-12);
+    const m = (a - d) * 60;
+    return `${sign}${d}° ${m.toFixed(1)}′`;
+  }
+
+  function fmtDeg(deg){
+    if (!isFinite(deg)) return "—";
+    return `${deg.toFixed(4)}°`;
+  }
+
+  function fmtMin(min){
+    if (!isFinite(min)) return "—";
+    return `${min.toFixed(1)}′`;
+  }
+
+  // Parse "deg min" or decimal degrees, with optional N/S/E/W
+  function parseAngle(input, kind /* "lat"|"lon"|"alt"|"deg" */){
+    if (!input) return NaN;
+    const s0 = String(input).trim().toUpperCase();
+    if (!s0) return NaN;
+
+    // Capture hemisphere letters if present
+    let hemi = null;
+    const hemiMatch = s0.match(/\b([NSEW])\b/);
+    if (hemiMatch) hemi = hemiMatch[1];
+
+    // Remove commas and extra symbols except . - + and space
+    const s = s0.replace(/,/g," ").replace(/[°′"]/g," ").replace(/\s+/g," ").trim();
+
+    const nums = s.match(/[+-]?\d+(\.\d+)?/g);
+    if (!nums || nums.length === 0) return NaN;
+
+    let val;
+    if (nums.length === 1){
+      val = parseFloat(nums[0]);
+    } else {
+      const d = parseFloat(nums[0]);
+      const m = parseFloat(nums[1]);
+      val = Math.abs(d) + (isFinite(m) ? m/60 : 0);
+      val = (d < 0 ? -val : val);
+    }
+
+    if (hemi){
+      if (hemi === "S" || hemi === "W") val = -Math.abs(val);
+      if (hemi === "N" || hemi === "E") val = Math.abs(val);
+    }
+
+    if (kind === "lat"){
+      if (val > 90) val = 90;
+      if (val < -90) val = -90;
+    }
+    if (kind === "lon"){
+      if (val > 180) val = ((val + 180) % 360) - 180;
+      if (val < -180) val = ((val - 180) % 360) + 180;
+    }
+    return val;
+  }
+
+  function parseMinutes(input){
+    if (input === null || input === undefined) return NaN;
+    const s = String(input).trim();
+    if (!s) return NaN;
+    const x = Number(s);
+    return isFinite(x) ? x : NaN;
+  }
+
+  // ==================================
+  // Nautical corrections (approximate)
+  // ==================================
+  function dipMinutes(height, unit){
+    if (!isFinite(height) || height < 0) return 0;
+    const h_m = unit === "ft" ? height * 0.3048 : height;
+    return 1.76 * Math.sqrt(h_m);
+  }
+
+  function refractionMinutes(Hdeg){
+    if (!isFinite(Hdeg) || Hdeg <= 0) return 0;
+    const H = Hdeg;
+    const R = 1.02 / Math.tan(toRad(H + 10.3/(H + 5.11)));
+    return -R;
+  }
+
+  function parallaxAltMinutes(HPmin, Hdeg){
+    if (!isFinite(HPmin) || !isFinite(Hdeg)) return 0;
+    return HPmin * Math.cos(toRad(Hdeg));
+  }
+
+  // ==================================
+  // Celestial reduction (Hc, Zn, etc.)
+  // ==================================
+  function computeLHA(GHAdeg, lonDegSigned){
+    return clamp360(GHAdeg - lonDegSigned);
+  }
+
+  function computeHcZn(latDeg, decDeg, LHAdeg){
+    const φ = toRad(latDeg);
+    const δ = toRad(decDeg);
+    const LHA = toRad(LHAdeg);
+
+    const sinHc = Math.sin(φ)*Math.sin(δ) + Math.cos(φ)*Math.cos(δ)*Math.cos(LHA);
+    const Hc = Math.asin(Math.max(-1, Math.min(1, sinHc)));
+
+    const y = Math.sin(LHA);
+    const x = (Math.cos(LHA) * Math.sin(φ)) - (Math.tan(δ) * Math.cos(φ));
+    let Z = Math.atan2(y, x);
+
+    let Zd = clamp360(toDeg(Z));
+    const Zn = Zd;
+
+    return { HcDeg: toDeg(Hc), ZnDeg: Zn };
+  }
+
+  function intercept(HoDeg, HcDeg){
+    const diffDeg = HoDeg - HcDeg;
+    const minutes = diffDeg * 60;
+    const dir = minutes >= 0 ? "Toward" : "Away";
+    return { minutes: Math.abs(minutes), signed: minutes, dir };
+  }
+
+  // =========================
+  // Language strings (EN/FR)
+  // =========================
+  const STR = {
+    en: {
+      appTitle: "Sextant + Intercept Calculator",
+      appSub: "Ho corrections • LHA/Hc/Zn • Intercept method • Offline PWA",
+      inputs: "Inputs",
+      outputs: "Outputs",
+      sight: "Sight",
+      almanac: "Almanac + DR",
+      reduction: "Reduction",
+      settings: "Settings",
+      statusIdle: "Enter a sight and compute Ho.",
+      statusHo: "Ho computed. Add DR + GHA/Dec to compute reduction.",
+      statusAll: "Reduction computed.",
+      body: "Celestial body",
+      limb: "Limb (Sun/Moon)",
+      hs: "Hs (sextant altitude)",
+      ie: "Index error (minutes)",
+      eye: "Height of eye",
+      units: "Units",
+      hp: "Horizontal Parallax HP (minutes)",
+      sd: "Semi-diameter SD (minutes)",
+      computeHo: "Compute Ho",
+      computeRed: "Compute Reduction",
+      recompute: "Recompute Now",
+      drLat: "DR Latitude",
+      drLon: "DR Longitude",
+      gha: "GHA (° ′)",
+      dec: "Declination (° ′ N/S)",
+      time: "Time (optional note)",
+      altMethod: "Altitude method",
+      hoManual: "Ho (manual)",
+      ap: "Assumed Position (optional)",
+      note: "Sight note",
+      mode: "Display mode",
+      anglePref: "Angle input preference",
+      storage: "Storage",
+      log: "Sight log",
+      clearLog: "Clear Log",
+      step: "Step",
+      value: "Value",
+      notes: "Notes",
+      logHead: "Sight log (most recent first)",
+      logKey: "Key result",
+      hoK: "Ho (observed altitude)",
+      lhaK: "LHA",
+      hcK: "Hc (computed altitude)",
+      znK: "Zn (true bearing)",
+      intK: "Intercept (a)",
+      toward: "Toward",
+      away: "Away",
+    },
+    fr: {
+      appTitle: "Calculateur Sextant + Interception",
+      appSub: "Corrections Ho • LHA/Hc/Zn • Méthode d’interception • PWA hors-ligne",
+      inputs: "Entrées",
+      outputs: "Résultats",
+      sight: "Visée",
+      almanac: "Almanach + Estime",
+      reduction: "Réduction",
+      settings: "Réglages",
+      statusIdle: "Entrez une visée puis calculez Ho.",
+      statusHo: "Ho calculé. Ajoutez Estime + GHA/Dec pour la réduction.",
+      statusAll: "Réduction calculée.",
+      body: "Astre",
+      limb: "Limbes (Soleil/Lune)",
+      hs: "Hs (hauteur au sextant)",
+      ie: "Erreur d’index (minutes)",
+      eye: "Hauteur d’œil",
+      units: "Unités",
+      hp: "Parallaxe horizontale HP (minutes)",
+      sd: "Demi-diamètre SD (minutes)",
+      computeHo: "Calculer Ho",
+      computeRed: "Calculer la réduction",
+      recompute: "Recalculer",
+      drLat: "Latitude (estime)",
+      drLon: "Longitude (estime)",
+      gha: "GHA (° ′)",
+      dec: "Déclinaison (° ′ N/S)",
+      time: "Heure (note optionnelle)",
+      altMethod: "Méthode d’altitude",
+      hoManual: "Ho (manuel)",
+      ap: "Position supposée (optionnel)",
+      note: "Note de visée",
+      mode: "Mode d’affichage",
+      anglePref: "Préférence de saisie d’angles",
+      storage: "Stockage",
+      log: "Journal de visées",
+      clearLog: "Effacer le journal",
+      step: "Étape",
+      value: "Valeur",
+      notes: "Notes",
+      logHead: "Journal (plus récent en premier)",
+      logKey: "Résultat clé",
+      hoK: "Ho (hauteur observée)",
+      lhaK: "LHA",
+      hcK: "Hc (hauteur calculée)",
+      znK: "Zn (relèvement vrai)",
+      intK: "Interception (a)",
+      toward: "Vers",
+      away: "Loin",
+    }
+  };
+
+  // =========================
+  // State + persistence
+  // =========================
+  const STATE_KEY = "sextant_app_v1B_state";
+  const LOG_KEY   = "sextant_app_v1B_log";
+
+  const state = {
+    lang: "en",
+    tab: "sight",
+    mode: "teach",
+    anglePref: "auto",
+    save: "on",
+    log: "on",
+    body: "sun",
+    limb: "lower",
+    hs: "",
+    ie: "",
+    eye: "",
+    eyeUnit: "m",
+    hp: "",
+    sd: "",
+    lat: "",
+    lon: "",
+    gha: "",
+    dec: "",
+    time: "",
+    altMethod: "ho",
+    hoManual: "",
+    apMode: "dr",
+    note: "",
+    computed: {
+      hasHo: false,
+      hasRed: false,
+      HoDeg: NaN,
+      LHAdeg: NaN,
+      HcDeg: NaN,
+      ZnDeg: NaN,
+      interceptMin: NaN,
+      interceptDir: "",
+      steps: []
+    }
+  };
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STATE_KEY);
+      if(!raw) return;
+      const obj = JSON.parse(raw);
+      Object.assign(state, obj);
+      state.computed = state.computed || {hasHo:false,hasRed:false,steps:[]};
+    }catch(e){}
+  }
+
+  function saveState(){
+    if (state.save !== "on") return;
+    try{ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }catch(e){}
+  }
+
+  function loadLog(){
+    try{
+      const raw = localStorage.getItem(LOG_KEY);
+      if(!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){ return []; }
+  }
+
+  function saveLog(arr){
+    try{ localStorage.setItem(LOG_KEY, JSON.stringify(arr)); }catch(e){}
+  }
+
+  // =========================
+  // UI wiring
+  // =========================
+  function setTab(tab){
+    state.tab = tab;
+    const tabs = document.querySelectorAll(".tab");
+    tabs.forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+    $("panelSight").style.display = tab === "sight" ? "" : "none";
+    $("panelAlmanac").style.display = tab === "almanac" ? "" : "none";
+    $("panelReduce").style.display = tab === "reduce" ? "" : "none";
+    $("panelSettings").style.display = tab === "settings" ? "" : "none";
+    saveState();
+  }
+
+  function setLang(lang){
+    state.lang = lang;
+    const t = STR[lang];
+    $("appTitle").textContent = t.appTitle;
+    $("appSub").textContent = t.appSub;
+
+    $("hInputs").textContent = t.inputs;
+    $("hOutputs").textContent = t.outputs;
+
+    $("tabSight").textContent = t.sight;
+    $("tabAlmanac").textContent = t.almanac;
+    $("tabReduce").textContent = t.reduction;
+    $("tabSettings").textContent = t.settings;
+
+    $("lblBody").textContent = t.body;
+    $("lblLimb").textContent = t.limb;
+    $("lblHs").textContent = t.hs;
+    $("lblIE").textContent = t.ie;
+    $("lblEye").textContent = t.eye;
+    $("lblEyeUnit").textContent = t.units;
+    $("lblHP").textContent = t.hp;
+    $("lblSD").textContent = t.sd;
+
+    $("btnComputeHo").textContent = t.computeHo;
+    $("btnComputeReduction").textContent = t.computeRed;
+    $("btnRecompute").textContent = t.recompute;
+
+    $("lblLat").textContent = t.drLat;
+    $("lblLon").textContent = t.drLon;
+    $("lblGHA").textContent = t.gha;
+    $("lblDec").textContent = t.dec;
+    $("lblTime").textContent = t.time;
+    $("lblAltMethod").textContent = t.altMethod;
+    $("lblHoManual").textContent = t.hoManual;
+    $("lblAP").textContent = t.ap;
+    $("lblNote").textContent = t.note;
+
+    $("lblMode").textContent = t.mode;
+    $("lblUnits").textContent = t.anglePref;
+    $("lblSave").textContent = t.storage;
+    $("lblLog").textContent = t.log;
+    $("btnClearLog").textContent = t.clearLog;
+
+    $("thStep").textContent = t.step;
+    $("thValue").textContent = t.value;
+    $("thNotes").textContent = t.notes;
+    $("thLog").textContent = t.logHead;
+    $("thLogKey").textContent = t.logKey;
+
+    $("kHoName").textContent = t.hoK;
+    $("kLhaName").textContent = t.lhaK;
+    $("kHcName").textContent = t.hcK;
+    $("kZnName").textContent = t.znK;
+    $("kIntName").textContent = t.intK;
+
+    renderStatus();
+    renderOutputs();
+    renderLog();
+  }
+
+  function bindInputs(){
+    const map = [
+      ["bodySel","body"],
+      ["limbSel","limb"],
+      ["hsIn","hs"],
+      ["ieIn","ie"],
+      ["eyeIn","eye"],
+      ["eyeUnitSel","eyeUnit"],
+      ["hpIn","hp"],
+      ["sdIn","sd"],
+      ["latIn","lat"],
+      ["lonIn","lon"],
+      ["ghaIn","gha"],
+      ["decIn","dec"],
+      ["timeIn","time"],
+      ["altMethodSel","altMethod"],
+      ["hoManualIn","hoManual"],
+      ["apModeSel","apMode"],
+      ["noteIn","note"],
+      ["modeSel","mode"],
+      ["anglePrefSel","anglePref"],
+      ["saveSel","save"],
+      ["logSel","log"],
+    ];
+
+    map.forEach(([id,key])=>{
+      const el = $(id);
+      el.value = state[key] ?? "";
+      el.addEventListener("change", ()=>{
+        state[key] = el.value;
+        if (id === "altMethodSel") updateManualHoVisibility();
+        saveState();
+        renderLog();
+      });
+      if (el.tagName === "INPUT"){
+        el.addEventListener("input", ()=>{
+          state[key] = el.value;
+          saveState();
+        });
+      }
+    });
+  }
+
+  function updateManualHoVisibility(){
+    const show = state.altMethod === "manual";
+    $("manualHoRow").style.display = show ? "" : "none";
+  }
+
+  function renderStatus(){
+    const t = STR[state.lang];
+    const dot = $("statusDot");
+    const txt = $("statusText");
+
+    if (!state.computed.hasHo){
+      dot.className = "dot";
+      txt.textContent = t.statusIdle;
+      return;
+    }
+    if (state.computed.hasHo && !state.computed.hasRed){
+      dot.className = "dot ok";
+      txt.textContent = t.statusHo;
+      return;
+    }
+    dot.className = "dot ok";
+    txt.textContent = t.statusAll;
+  }
+
+  function setKPI(id, val){ $(id).textContent = val; }
+
+  function renderOutputs(){
+    $("yearNow").textContent = new Date().getFullYear();
+
+    setKPI("kHoVal", isFinite(state.computed.HoDeg) ? fmtDM(state.computed.HoDeg) : "—");
+    setKPI("kLhaVal", isFinite(state.computed.LHAdeg) ? fmtDM(state.computed.LHAdeg) : "—");
+    setKPI("kHcVal", isFinite(state.computed.HcDeg) ? fmtDM(state.computed.HcDeg) : "—");
+    setKPI("kZnVal", isFinite(state.computed.ZnDeg) ? `${state.computed.ZnDeg.toFixed(1)}°` : "—");
+
+    if (isFinite(state.computed.interceptMin)){
+      const t = STR[state.lang];
+      const dir = (state.computed.interceptDir === "Toward") ? t.toward : t.away;
+      setKPI("kIntVal", `${state.computed.interceptMin.toFixed(1)}′  ${dir}`);
+    } else {
+      setKPI("kIntVal", "—");
+    }
+
+    const tbody = $("stepsBody");
+    tbody.innerHTML = "";
+    const teach = state.mode === "teach";
+
+    const steps = Array.isArray(state.computed.steps) ? state.computed.steps : [];
+    if (!steps.length){
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 3;
+      td.className = "small";
+      td.id = "stepsEmpty";
+      td.textContent = "No calculations yet.";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    } else {
+      steps.forEach(s => {
+        if (!teach && s.level === "detail") return;
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td"); td1.textContent = s.step;
+        const td2 = document.createElement("td"); td2.className="mono"; td2.textContent = s.value;
+        const td3 = document.createElement("td"); td3.textContent = s.note || "";
+        tr.append(td1, td2, td3);
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  function escapeHTML(s){
+    return String(s).replace(/[&<>"']/g, (c)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  function renderLog(){
+    const tbl = $("logTable");
+    if (state.log !== "on"){
+      tbl.style.display = "none";
+      return;
+    }
+    const log = loadLog();
+    tbl.style.display = log.length ? "" : "none";
+    const body = $("logBody");
+    body.innerHTML = "";
+    log.slice(0,10).forEach(item=>{
+      const tr = document.createElement("tr");
+      const td1 = document.createElement("td");
+      const td2 = document.createElement("td");
+      td1.innerHTML = `<div class="mono">${escapeHTML(item.stamp)}</div><div class="small">${escapeHTML(item.summary)}</div>`;
+      td2.innerHTML = `<div class="mono">${escapeHTML(item.key)}</div>`;
+      tr.append(td1, td2);
+      body.appendChild(tr);
+    });
+  }
+
+  // =========================
+  // Computations
+  // =========================
+  function defaultsForBody(){
+    const body = state.body;
+    let HP = 0, SD = 0;
+    if (body === "sun"){ HP = 0.15; SD = 16.0; }
+    if (body === "moon"){ HP = 57.0; SD = 15.5; }
+    if (body === "star"){ HP = 0; SD = 0; }
+    return {HP, SD};
+  }
+
+  function computeHo(){
+    const steps = [];
+
+    const Hs = parseAngle(state.hs, "alt");
+    const IEmin = parseMinutes(state.ie);
+    const eye = Number(String(state.eye||"").trim());
+    const unit = state.eyeUnit;
+
+    if (!isFinite(Hs)){
+      state.computed.hasHo = false;
+      state.computed.HoDeg = NaN;
+      state.computed.steps = [{step:"Error", value:"—", note:"Invalid Hs input", level:"main"}];
+      renderStatus(); renderOutputs();
+      return false;
+    }
+
+    const ICmin = isFinite(IEmin) ? IEmin : 0;
+    const H1 = Hs + (ICmin/60);
+    steps.push({step:"Hs", value:fmtDM(Hs), note:"Raw sextant altitude", level:"main"});
+    steps.push({step:"Index correction", value:fmtMin(ICmin), note:"Add algebraically to Hs", level:"main"});
+    steps.push({step:"H (after IC)", value:fmtDM(H1), note:"Hs + IC", level:"detail"});
+
+    const Dip = dipMinutes(isFinite(eye)?eye:0, unit);
+    const H2 = H1 - (Dip/60);
+    steps.push({step:"Dip", value:fmtMin(Dip), note:`Height of eye = ${isFinite(eye)?eye:"0"} ${unit}`, level:"main"});
+    steps.push({step:"H (after dip)", value:fmtDM(H2), note:"H - dip", level:"detail"});
+
+    const R = refractionMinutes(Math.max(0.1, H2));
+    const H3 = H2 + (R/60);
+    steps.push({step:"Refraction (Bennett)", value:fmtMin(R), note:"Negative minutes reduce altitude", level:"main"});
+    steps.push({step:"H (after refraction)", value:fmtDM(H3), note:"H + R", level:"detail"});
+
+    const def = defaultsForBody();
+    const HP = isFinite(parseMinutes(state.hp)) ? parseMinutes(state.hp) : def.HP;
+    const SD = isFinite(parseMinutes(state.sd)) ? parseMinutes(state.sd) : def.SD;
+
+    let pAlt = 0;
+    if (state.body === "moon" || state.body === "sun"){
+      pAlt = parallaxAltMinutes(HP, H3);
+    }
+    const H4 = H3 + (pAlt/60);
+    steps.push({step:"Parallax in altitude", value:fmtMin(pAlt), note:`HP=${HP.toFixed(2)}′`, level:"main"});
+    steps.push({step:"H (after parallax)", value:fmtDM(H4), note:"H + p", level:"detail"});
+
+    let sdApply = 0;
+    if (state.body === "sun" || state.body === "moon"){
+      if (state.limb === "lower") sdApply = +SD;
+      if (state.limb === "upper") sdApply = -SD;
+      if (state.limb === "center") sdApply = 0;
+    }
+    const Ho = H4 + (sdApply/60);
+    steps.push({step:"Semi-diameter", value:fmtMin(sdApply), note:`SD=${SD.toFixed(1)}′, limb=${state.limb}`, level:"main"});
+    steps.push({step:"Ho", value:fmtDM(Ho), note:"Observed altitude (corrected)", level:"main"});
+
+    state.computed.hasHo = true;
+    state.computed.HoDeg = Ho;
+    state.computed.hasRed = false;
+    state.computed.steps = steps;
+
+    $("liveHoNote").textContent = `Ho: ${fmtDM(Ho)}`;
+    renderStatus(); renderOutputs();
+
+    if (state.log === "on"){
+      addLogEntry({HoDeg:Ho});
+    }
+    return true;
+  }
+
+  function getHoForReduction(){
+    if (state.altMethod === "manual"){
+      const hoM = parseAngle(state.hoManual, "alt");
+      return isFinite(hoM) ? hoM : NaN;
+    }
+    return state.computed.hasHo ? state.computed.HoDeg : NaN;
+  }
+
+  function computeReduction(){
+    if (state.altMethod === "ho"){
+      computeHo();
+    }
+    const Ho = getHoForReduction();
+    const lat = parseAngle(state.lat, "lat");
+    const lon = parseAngle(state.lon, "lon");
+    const GHA = parseAngle(state.gha, "deg");
+    const dec = parseAngle(state.dec, "lat");
+
+    const steps = Array.isArray(state.computed.steps) ? [...state.computed.steps] : [];
+
+    if (!isFinite(Ho)){
+      state.computed.hasRed = false;
+      steps.push({step:"Error", value:"—", note:"Ho is missing/invalid", level:"main"});
+      state.computed.steps = steps;
+      renderStatus(); renderOutputs();
+      return false;
+    }
+    if (!isFinite(lat) || !isFinite(lon) || !isFinite(GHA) || !isFinite(dec)){
+      state.computed.hasRed = false;
+      steps.push({step:"Error", value:"—", note:"Need DR lat/lon + GHA + Dec", level:"main"});
+      state.computed.steps = steps;
+      renderStatus(); renderOutputs();
+      return false;
+    }
+
+    let apLat = lat, apLon = lon;
+    if (state.apMode === "round"){
+      apLat = Math.round(lat);
+      apLon = Math.round(lon);
+    }
+
+    const LHA = computeLHA(GHA, apLon);
+    const {HcDeg, ZnDeg} = computeHcZn(apLat, dec, LHA);
+    const a = intercept(Ho, HcDeg);
+
+    steps.push({step:"DR Latitude", value:fmtDM(lat), note:"Signed input with N/S allowed", level:"detail"});
+    steps.push({step:"DR Longitude", value:fmtDM(lon), note:"Signed input with E/W allowed", level:"detail"});
+    steps.push({step:"Assumed Lat (AP)", value:fmtDM(apLat), note: state.apMode==="round" ? "Rounded to whole degrees" : "Using DR", level:"main"});
+    steps.push({step:"Assumed Lon (AP)", value:fmtDM(apLon), note: state.apMode==="round" ? "Rounded to whole degrees" : "Using DR", level:"main"});
+
+    steps.push({step:"GHA", value:fmtDM(GHA), note:"From Nautical Almanac", level:"main"});
+    steps.push({step:"Declination", value:fmtDM(dec), note:"North positive / South negative", level:"main"});
+    steps.push({step:"LHA", value:fmtDM(LHA), note:"LHA = GHA − lon(signed)", level:"main"});
+
+    steps.push({step:"Hc", value:fmtDM(HcDeg), note:"Computed altitude", level:"main"});
+    steps.push({step:"Zn", value:`${ZnDeg.toFixed(1)}°`, note:"True bearing to GP", level:"main"});
+
+    const dir = a.signed >= 0 ? "Toward" : "Away";
+    steps.push({step:"Intercept (a)", value:`${Math.abs(a.signed).toFixed(1)}′`, note:`${dir} (Ho ${a.signed>=0?">":"<"} Hc)`, level:"main"});
+
+    state.computed.hasRed = true;
+    state.computed.HoDeg = Ho;
+    state.computed.LHAdeg = LHA;
+    state.computed.HcDeg = HcDeg;
+    state.computed.ZnDeg = ZnDeg;
+    state.computed.interceptMin = Math.abs(a.signed);
+    state.computed.interceptDir = dir;
+    state.computed.steps = steps;
+
+    const stampParts = [];
+    if (state.time) stampParts.push(state.time);
+    stampParts.push(`Body: ${state.body.toUpperCase()} • Limb: ${state.limb}`);
+    if (state.note) stampParts.push(`Note: ${state.note}`);
+    $("printStamp").textContent = stampParts.join("  |  ");
+
+    renderStatus(); renderOutputs();
+
+    if (state.log === "on"){
+      addLogEntry({HoDeg:Ho, LHAdeg:LHA, HcDeg, ZnDeg, interceptMin:Math.abs(a.signed), interceptDir:dir});
+    }
+    return true;
+  }
+
+  function addLogEntry(calc){
+    const log = loadLog();
+
+    const stamp = new Date().toISOString().replace("T"," ").slice(0,19) + "Z";
+    const Ho = isFinite(calc.HoDeg) ? fmtDM(calc.HoDeg) : "—";
+    const key = (isFinite(calc.interceptMin) && isFinite(calc.ZnDeg))
+      ? `${calc.interceptMin.toFixed(1)}′ ${calc.interceptDir} @ Zn ${calc.ZnDeg.toFixed(1)}°`
+      : `Ho ${Ho}`;
+
+    const summary = [
+      `Hs: ${state.hs || "—"}`,
+      `DR: ${state.lat || "—"}, ${state.lon || "—"}`,
+      `GHA/Dec: ${state.gha || "—"} / ${state.dec || "—"}`,
+    ].join(" • ");
+
+    log.unshift({stamp, key, summary});
+    saveLog(log.slice(0,50));
+    renderLog();
+  }
+
+  // =========================
+  // Events
+  // =========================
+  function bindEvents(){
+    document.querySelectorAll(".tab").forEach(el=>{
+      el.addEventListener("click", ()=>setTab(el.dataset.tab));
+    });
+
+    $("btnComputeHo").addEventListener("click", computeHo);
+    $("btnComputeReduction").addEventListener("click", computeReduction);
+    $("btnRecompute").addEventListener("click", computeReduction);
+
+    $("btnPrint").addEventListener("click", ()=>{
+      computeReduction();
+      window.print();
+    });
+
+    $("btnReset").addEventListener("click", ()=>{
+      const keep = {lang: state.lang, save: state.save, log: state.log, mode: state.mode, anglePref: state.anglePref};
+      for (const k of Object.keys(state)) {
+        if (k === "computed") continue;
+        if (k in keep) continue;
+        state[k] = (k === "tab") ? "sight" : "";
+      }
+      state.tab = "sight";
+      state.body="sun"; state.limb="lower"; state.eyeUnit="m";
+      state.altMethod="ho"; state.apMode="dr";
+      state.computed = {hasHo:false,hasRed:false,HoDeg:NaN,LHAdeg:NaN,HcDeg:NaN,ZnDeg:NaN,interceptMin:NaN,interceptDir:"",steps:[]};
+
+      Object.assign(state, keep);
+      saveState();
+      bindInputs();
+      updateManualHoVisibility();
+      setTab("sight");
+      renderStatus(); renderOutputs(); renderLog();
+      $("liveHoNote").textContent = "";
+    });
+
+    $("btnClearLog").addEventListener("click", ()=>{
+      saveLog([]);
+      renderLog();
+    });
+
+    $("btnLang").addEventListener("click", ()=>{
+      setLang(state.lang === "en" ? "fr" : "en");
+      saveState();
+    });
+
+    $("altMethodSel").addEventListener("change", updateManualHoVisibility);
+
+    ["hsIn","ieIn","eyeIn","eyeUnitSel","hpIn","sdIn","bodySel","limbSel"].forEach(id=>{
+      $(id).addEventListener("input", ()=>{
+        if (state.save === "on") saveState();
+      });
+    });
+  }
+
+  // =========================
+  // PWA install + SW
+  // =========================
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e)=>{
+    e.preventDefault();
+    deferredPrompt = e;
+    $("btnInstall").style.display = "";
+  });
+
+  $("btnInstall").addEventListener("click", async ()=>{
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    $("btnInstall").style.display = "none";
+  });
+
+  if ("serviceWorker" in navigator){
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+    });
+  }
+
+  // =========================
+  // Init
+  // =========================
+  loadState();
+  bindInputs();
+  updateManualHoVisibility();
+  setTab(state.tab || "sight");
+  setLang(state.lang || "en");
+  bindEvents();
+  renderStatus();
+  renderOutputs();
+  renderLog();
+
+})();
+</script>
+</body>
+</html>
